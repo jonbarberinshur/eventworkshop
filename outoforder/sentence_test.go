@@ -11,9 +11,9 @@ import (
 func TestHandleEventsInOrder(t *testing.T) {
 
 	want := "the quick brown fox"
-	sentence := outoforder.Sentence{}
+	sentence := &outoforder.Sentence{}
 
-	sendTextAsEventsTo(want, &sentence)
+	sendTo(textAsEvents(want), sentence)
 
 	got := sentence.Text()
 
@@ -23,7 +23,20 @@ func TestHandleEventsInOrder(t *testing.T) {
 
 }
 
-func sendTextAsEventsTo(text string, aggregate evt.Aggregate) {
+// sendTo sends events to an aggregate
+func sendTo(events []*evt.Event, aggregate evt.Aggregate) {
+
+	handlerMap := aggregate.EventHandlers()
+
+	for _, event := range events {
+		if handler, ok := handlerMap[event.Type]; ok {
+			handler(event)
+		}
+	}
+}
+
+// textAsEvents splits a string into append events
+func textAsEvents(text string) []*evt.Event {
 	words := strings.Split(text, " ")
 
 	events := make([]*evt.Event, len(words))
@@ -39,12 +52,5 @@ func sendTextAsEventsTo(text string, aggregate evt.Aggregate) {
 		ta := evt.TextAppended{Text: payload}
 		events[i] = evt.NewEvent(ta.PayloadType(), ta)
 	}
-
-	handlerMap := aggregate.EventHandlers()
-
-	for _, event := range events {
-		if handler, ok := handlerMap[event.Type]; ok {
-			handler(event)
-		}
-	}
+	return events
 }
