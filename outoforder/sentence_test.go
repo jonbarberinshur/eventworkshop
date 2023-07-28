@@ -4,6 +4,7 @@ import (
 	"adsd/evt"
 	"adsd/outoforder"
 	"strings"
+
 	"testing"
 )
 
@@ -12,7 +13,7 @@ func TestHandleEventsInOrder(t *testing.T) {
 	want := "the quick brown fox"
 	sentence := outoforder.Sentence{}
 
-	sendAsEvents(want, &sentence)
+	sendTextAsEventsTo(want, &sentence)
 
 	got := sentence.Text()
 
@@ -22,7 +23,7 @@ func TestHandleEventsInOrder(t *testing.T) {
 
 }
 
-func sendAsEvents(text string, sentence *outoforder.Sentence) {
+func sendTextAsEventsTo(text string, aggregate evt.Aggregate) {
 	words := strings.Split(text, " ")
 
 	events := make([]*evt.Event, len(words))
@@ -39,7 +40,7 @@ func sendAsEvents(text string, sentence *outoforder.Sentence) {
 		events[i] = evt.NewEvent(ta.PayloadType(), ta)
 	}
 
-	handlerMap := sentence.EventHandlers()
+	handlerMap := aggregate.EventHandlers()
 
 	for _, event := range events {
 		if handler, ok := handlerMap[event.Type]; ok {
