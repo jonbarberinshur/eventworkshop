@@ -13,7 +13,7 @@ func TestHandleEventsInOrder(t *testing.T) {
 	want := "the quick brown fox"
 	sentence := &outoforder.Sentence{}
 
-	sendTo(textAsEvents(want), sentence)
+	inOrderSend(textAsEvents(want), sentence)
 
 	got := sentence.Text()
 
@@ -21,18 +21,6 @@ func TestHandleEventsInOrder(t *testing.T) {
 		t.Fatalf("Wanted %q but got %q", want, got)
 	}
 
-}
-
-// sendTo sends events to an aggregate
-func sendTo(events []*evt.Event, aggregate evt.Aggregate) {
-
-	handlerMap := aggregate.EventHandlers()
-
-	for _, event := range events {
-		if handler, ok := handlerMap[event.Type]; ok {
-			handler(event)
-		}
-	}
 }
 
 // textAsEvents splits a string into append events
@@ -53,4 +41,30 @@ func textAsEvents(text string) []*evt.Event {
 		events[i] = evt.NewEvent(ta.PayloadType(), ta)
 	}
 	return events
+}
+
+type eventSender func(events []*evt.Event, aggregate evt.Aggregate)
+
+// inOrderSend sends events to an aggregate in order
+func inOrderSend(events []*evt.Event, aggregate evt.Aggregate) {
+
+	handlerMap := aggregate.EventHandlers()
+
+	for _, event := range events {
+		if handler, ok := handlerMap[event.Type]; ok {
+			handler(event)
+		}
+	}
+}
+
+// reverseOrderSend sends events to an aggregate in reverse order
+func reverseOrderSend(events []*evt.Event, aggregate evt.Aggregate) {
+
+	reversed := make([]*evt.Event, len(events))
+
+	for i := range events {
+		reversed[len(events)-1-i] = events[i]
+	}
+	inOrderSend(reversed, aggregate)
+
 }
