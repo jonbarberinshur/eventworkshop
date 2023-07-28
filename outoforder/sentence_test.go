@@ -8,17 +8,29 @@ import (
 	"testing"
 )
 
-func TestHandleEventsInOrder(t *testing.T) {
+func TestHandleEventDelivery(t *testing.T) {
 
-	want := "the quick brown fox"
-	sentence := &outoforder.Sentence{}
+	tests := map[string]struct {
+		sender eventSender
+	}{
+		"in order":     {sender: inOrderSend},
+		"out of order": {sender: reverseOrderSend},
+	}
 
-	inOrderSend(textAsEvents(want), sentence)
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			want := "the quick brown fox"
+			sentence := &outoforder.Sentence{}
 
-	got := sentence.Text()
+			tc.sender(textAsEvents(want), sentence)
 
-	if got != want {
-		t.Fatalf("Wanted %q but got %q", want, got)
+			got := sentence.Text()
+
+			if got != want {
+				t.Fatalf("Wanted %q but got %q", want, got)
+			}
+
+		})
 	}
 
 }
